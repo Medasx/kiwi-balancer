@@ -84,9 +84,8 @@ func normalizePriorities(in map[int][]int) map[int][]int {
 	}
 
 	sort.Slice(priorities, func(i, j int) bool {
-		return i < j
+		return priorities[i] < priorities[j]
 	})
-
 	normalizedMap := make(map[int][]int)
 	for i := 0; i < len(priorities); i++ {
 		normalizedMap[i+1] = in[priorities[i]]

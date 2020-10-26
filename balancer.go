@@ -90,9 +90,7 @@ func (b *Balancer) start() {
 			// reset resources
 			queue = incomplete
 			chunks = 0
-
 		}
-
 	}()
 }
 

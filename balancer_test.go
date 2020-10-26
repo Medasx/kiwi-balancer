@@ -63,7 +63,6 @@ var divideResourcesTestCases = []struct {
 				{priority: 3},
 				{priority: 3},
 				{priority: 3},
-
 			},
 		},
 		result: map[int]int{
@@ -85,6 +84,50 @@ func TestDivideResources(t *testing.T) {
 					if v1 != v2 {
 						t.Errorf("index %d expected %d got %d", k1, v1, v2)
 					}
+				} else {
+					t.Errorf("index %d not found", k1)
+				}
+			}
+		})
+
+	}
+}
+
+var normalizePrioritiesTestCases = []struct {
+	name   string
+	input  map[int][]int
+	result map[int][]int
+}{
+	{
+		name: "Basic",
+		input: map[int][]int{
+			7:  {0, 2},
+			5:  {1, 3},
+			10: {4},
+		},
+		result: map[int][]int{
+			2: {0, 2},
+			1: {1, 3},
+			3: {4},
+		},
+	},
+}
+
+func TestNormalizePriorities(t *testing.T) {
+	for _, item := range normalizePrioritiesTestCases {
+		t.Run(item.name, func(t *testing.T) {
+			res := normalizePriorities(item.input)
+			for k1, v1 := range item.result {
+				if v2, ok := res[k1]; ok {
+					if len(v2) != len(v1) {
+						t.Errorf("expected len %d got %d", len(v1), len(v2))
+					}
+					for i, item := range v1 {
+						if item != v2[i] {
+							t.Errorf("index %d expected %d got %d", i, item, v2[i])
+						}
+					}
+
 				} else {
 					t.Errorf("index %d not found", k1)
 				}
