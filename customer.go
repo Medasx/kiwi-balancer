@@ -1,16 +1,17 @@
-		package main
+package main
 
-		import (
-			"context"
-			"math/rand"
-			"time"
-		)
+import (
+	"context"
+	"math/rand"
+	"time"
+)
 
 // customer implements Customer interface.
 type customer struct {
 	needsService *time.Ticker
 	workload     int
 	weight       int
+	done         chan struct{} // added for better testing
 }
 
 // NewCustomer initializes the customer.
@@ -19,6 +20,7 @@ func NewCustomer() Customer {
 		needsService: time.NewTicker(time.Duration(1+rand.Intn(3)) * time.Second),
 		workload:     rand.Intn(100),
 		weight:       rand.Intn(10),
+		done:         make(chan struct{}, 1),
 	}
 }
 
@@ -37,6 +39,7 @@ func (c *customer) Notify() <-chan time.Time {
 func (c *customer) Workload(ctx context.Context) chan int {
 	workload := make(chan int)
 	go func() {
+		defer close(c.done)
 		defer close(workload)
 
 		load := c.workload
@@ -46,6 +49,8 @@ func (c *customer) Workload(ctx context.Context) chan int {
 				return
 			case workload <- load:
 				if load -= 1; load == 0 {
+					c.done <- struct{}{}
+
 					return
 				}
 			}
@@ -57,4 +62,9 @@ func (c *customer) Workload(ctx context.Context) chan int {
 // Weight of this customer, i.e. how important they are.
 func (c *customer) Weight() int {
 	return c.weight
+}
+
+// Done returns a channel that's closed when work done. Added
+func (c *customer) Done() <-chan struct{} {
+	return c.done
 }

@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"testing"
+	"time"
 )
 
 var divideResourcesTestCases = []struct {
@@ -135,4 +137,28 @@ func TestNormalizePriorities(t *testing.T) {
 		})
 
 	}
+}
+
+func TestBalancer(t *testing.T) {
+	b := NewBalancer(&TheExpensiveFragileService{}, 0)
+	c := []*customer{
+		{weight: 5, workload: 50, needsService: time.NewTicker(time.Second), done: make(chan struct{}, 1)},
+		{weight: 5, workload: 50, needsService: time.NewTicker(time.Second), done: make(chan struct{}, 1)},
+		{weight: 10, workload: 50, needsService: time.NewTicker(time.Second), done: make(chan struct{}, 1)},
+	}
+	for _, customer := range c {
+		b.Register(context.Background(), customer)
+	}
+	b.availableChunks <- 100
+
+	select {
+	case <-c[0].Done():
+		t.Errorf("customer %d should not be done first", 0)
+	case <-c[1].Done():
+		t.Errorf("customer %d should not be done first", 1)
+	case <-c[2].Done():
+		t.Log("highest weight ended first")
+
+	}
+
 }
